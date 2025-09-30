@@ -12,26 +12,30 @@ from trainer.trainer import Trainer
 from modules.optimization import AdamW, get_cosine_schedule_with_warmup
 
 
+def set_seed(seed):
+    """Set random seed for reproducibility."""
+    if seed < 0:
+        print("Random seed not set.")
+        return
+    print(f"Setting random seed to {seed}")
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 def main():
     config = AllConfig()
+    
     os.environ['TOKENIZERS_PARALLELISM'] = "false"
-    if not config.no_tensorboard:
-        writer = SummaryWriter(log_dir=config.tb_log_dir)
-    else:
-        writer = None
-
-
-    if config.seed >= 0:
-        torch.manual_seed(config.seed)
-        np.random.seed(config.seed)
-        torch.cuda.manual_seed_all(config.seed)
-        random.seed(config.seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+    writer = None if config.no_tensorboard else SummaryWriter(log_dir=config.tb_log_dir)
+    set_seed(config.seed)
+        
 
     if config.huggingface:
         from transformers import CLIPTokenizer
-        tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32", TOKENIZERS_PARALLELISM=False)
+        tokenizer = CLIPTokenizer.from_pretrained("/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32", TOKENIZERS_PARALLELISM=False)
     else:
         from modules.tokenization_clip import SimpleTokenizer
         tokenizer = SimpleTokenizer()

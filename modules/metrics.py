@@ -62,22 +62,19 @@ def sim_matrix_inference(text_embeds_per_video_id, vid_embeds_pooled_per_video_i
     return sims
 
 
-def generate_embeds_per_video_id(text_embeds, vid_embeds_pooled, all_vid_ids, pooling_type):
+def generate_embeds_per_video_id(text_embeds, vid_embeds_pooled, video_ids, pooling_type):
     # Construct dictionary of text embeds per unique video id
-    text_embeds_per_video_id = {}
+    video_id_to_text_embeds = {}
 
-    for idx, v_id in enumerate(all_vid_ids):
-        if v_id in text_embeds_per_video_id:
-            text_embeds_per_video_id[v_id].append(text_embeds[idx])
-        else:
-            text_embeds_per_video_id[v_id] = [text_embeds[idx]]
-
-    for v_id in text_embeds_per_video_id:
-        text_embeds_per_video_id[v_id] = torch.stack(text_embeds_per_video_id[v_id])
+    for idx, v_id in enumerate(video_ids):
+        video_id_to_text_embeds.setdefault(v_id, [])
+        video_id_to_text_embeds[v_id].append(text_embeds[idx])
+        
+    video_id_to_text_embeds = {video_id: torch.stack(text_embeds) for video_id, text_embeds in video_id_to_text_embeds.items()}
 
     # num_vids x max_text_per_vid x embed_dim
-    text_embeds_per_video_id = pad_and_stack_dict_to_tensor(text_embeds_per_video_id,
-        text_embeds_per_video_id.keys(), text_embeds.shape[-1])
+    video_id_to_text_embeds = pad_and_stack_dict_to_tensor(video_id_to_text_embeds,
+        video_id_to_text_embeds.keys(), text_embeds.shape[-1])
 
     if pooling_type == 'avg':
         # num_vids x embed_dim
@@ -89,7 +86,7 @@ def generate_embeds_per_video_id(text_embeds, vid_embeds_pooled, all_vid_ids, po
 
         for i in range(vid_embeds_pooled.shape[0]):
             vid_embeds_pooled_per_video_id.append({})
-            for idx, v_id in enumerate(all_vid_ids):
+            for idx, v_id in enumerate(video_ids):
                 if v_id in vid_embeds_pooled_per_video_id[i]:
                     vid_embeds_pooled_per_video_id[i][v_id].append(vid_embeds_pooled[i, idx, :])
                 else:
@@ -106,7 +103,7 @@ def generate_embeds_per_video_id(text_embeds, vid_embeds_pooled, all_vid_ids, po
         # num_vids x num_vids x max_text_per_vid x embed_dim
         vid_embeds_pooled_per_video_id = torch.stack(vid_embeds_pooled_per_video_id)
 
-    return text_embeds_per_video_id, vid_embeds_pooled_per_video_id
+    return video_id_to_text_embeds, vid_embeds_pooled_per_video_id
 
 
 def t2v_metrics(sims):
@@ -141,6 +138,25 @@ def v2t_metrics(sims):
 
     return compute_metrics(ranks)
 
+
+def compute_accuracy(sims, labels):
+    """
+    Compute the accuracy of the model predictions.
+    :param sims: Similarity matrix of shape (label_nums, video_nums)
+    :param labels: Ground truth labels of shape (video_nums, label_nums)
+    :return: Accuracy as a float
+    """
+    _, predicted_indices = torch.max(sims, dim=0)
+    
+    labels = labels.to(predicted_indices.device)
+    
+    true_indices = torch.argmax(labels, dim=1)
+    
+    correct_predictions = (predicted_indices == true_indices).sum().item()
+
+    accuracy = correct_predictions / labels.size(0)
+    
+    return accuracy
 
 def compute_metrics(lst):
     metrics = {}

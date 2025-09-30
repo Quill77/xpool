@@ -30,7 +30,7 @@ def main():
 
     if config.huggingface:
         from transformers import CLIPTokenizer
-        tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32", TOKENIZERS_PARALLELISM=False)
+        tokenizer = CLIPTokenizer.from_pretrained("/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32", TOKENIZERS_PARALLELISM=False)
     else:
         from modules.tokenization_clip import SimpleTokenizer
         tokenizer = SimpleTokenizer()
@@ -59,7 +59,7 @@ def main():
         if config.load_epoch > 0:
             trainer.load_checkpoint("checkpoint-epoch{}.pth".format(config.load_epoch))
         else:
-            trainer.load_checkpoint("model_best.pth")    
+            trainer.load_checkpoint("msrvtt_9k_model_best.pth")    
     trainer.validate()
 
 

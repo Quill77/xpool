@@ -1,0 +1,8 @@
+data
+xpool.*.out
+checkpoints
+openai
+outputs
+logs
+
+__pycache__

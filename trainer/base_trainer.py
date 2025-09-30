@@ -35,6 +35,7 @@ class BaseTrainer:
         """
         raise NotImplementedError
 
+
     @abstractmethod
     def _valid_epoch_step(self, epoch, step, num_steps):
         """
@@ -50,7 +51,8 @@ class BaseTrainer:
         for epoch in range(self.start_epoch, self.num_epochs + 1):
             result = self._train_epoch(epoch)
             if epoch % self.config.save_every == 0:
-                    self._save_checkpoint(epoch, save_best=False)
+                self._save_checkpoint(epoch, save_best=False)
+
 
     def validate(self):
         self._valid_epoch_step(0,0,0)
@@ -91,14 +93,24 @@ class BaseTrainer:
         Load from saved checkpoints
         :param model_name: Model name experiment to be loaded
         """
+        
         checkpoint_path = os.path.join(self.checkpoint_dir, model_name)
         print("Loading checkpoint: {} ...".format(checkpoint_path))
-        checkpoint = torch.load(checkpoint_path)
+        
+        # 加载模型权重
+        checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        
         self.start_epoch = checkpoint['epoch'] + 1 if 'epoch' in checkpoint else 1
         state_dict = checkpoint['state_dict']
         
-        self.model.load_state_dict(state_dict)
-
+        # 移除 position_ids 键
+        keys_to_remove = ["clip.text_model.embeddings.position_ids", "clip.vision_model.embeddings.position_ids"]
+        for key in keys_to_remove:
+            if key in state_dict:
+                del state_dict[key]
+        
+        self.model.load_state_dict(state_dict)                
+        
         if self.optimizer is not None:
             self.optimizer.load_state_dict(checkpoint['optimizer'])
 
