@@ -59,7 +59,7 @@ def main():
         if config.load_epoch > 0:
             trainer.load_checkpoint("checkpoint-epoch{}.pth".format(config.load_epoch))
         else:
-            trainer.load_checkpoint("msrvtt_9k_model_best.pth")    
+            trainer.load_checkpoint("msrvtt_9k_model_best.pth")
     trainer.validate()
 
 

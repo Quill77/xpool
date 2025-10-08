@@ -3,8 +3,9 @@ from datasets.model_transforms import init_transform_dict
 from datasets.msrvtt_dataset import MSRVTTDataset
 from datasets.msvd_dataset import MSVDDataset
 from datasets.lsmdc_dataset import LSMDCDataset
-from datasets.suscape_long_dataset import SuscapeLongDataset
-from datasets.suscape_short_dataset import SuscapeShortDataset
+from datasets.suscape_labeled_dataset import SuscapeLabeledDataset
+from datasets.suscape_unlabeled_dataset import SuscapeUnlabeledDataset
+from datasets.nuscene_corruption_dataset import NusceneCorruptionDataset
 from torch.utils.data import DataLoader
 
 class DataFactory:
@@ -45,27 +46,36 @@ class DataFactory:
                 return DataLoader(dataset, batch_size=config.batch_size,
                             shuffle=False, num_workers=config.num_workers)
                 
-        elif config.dataset_name == 'suscape_long':
+        elif config.dataset_name == 'suscape_labeled':
             if split_type == 'train':
-                dataset = SuscapeLongDataset(config, split_type, train_img_tfms)
+                dataset = SuscapeLabeledDataset(config, split_type, train_img_tfms)
                 return DataLoader(dataset, batch_size=config.batch_size,
                             shuffle=True, num_workers=config.num_workers)
             else:
-                dataset = SuscapeLongDataset(config, split_type, test_img_tfms)
+                dataset = SuscapeLabeledDataset(config, split_type, test_img_tfms)
                 return DataLoader(dataset, batch_size=config.batch_size,
                             shuffle=False, num_workers=config.num_workers)
 
 
-        elif config.dataset_name == 'suscape_short':
+        elif config.dataset_name == 'suscape_unlabeled':
             if split_type == 'train':
-                dataset = SuscapeShortDataset(config, split_type, train_img_tfms)
+                dataset = SuscapeUnlabeledDataset(config, split_type, train_img_tfms)
                 return DataLoader(dataset, batch_size=config.batch_size,
                             shuffle=True, num_workers=config.num_workers)
             else:
-                dataset = SuscapeShortDataset(config, split_type, test_img_tfms)
+                dataset = SuscapeUnlabeledDataset(config, split_type, test_img_tfms)
                 return DataLoader(dataset, batch_size=config.batch_size,
                             shuffle=False, num_workers=config.num_workers)
 
+        elif config.dataset_name == 'nuscene_c':
+            if split_type == 'train':
+                dataset = NusceneCorruptionDataset(config, split_type, train_img_tfms)
+                return DataLoader(dataset, batch_size=config.batch_size,
+                            shuffle=True, num_workers=config.num_workers)
+            else:
+                dataset = NusceneCorruptionDataset(config, split_type, test_img_tfms)
+                return DataLoader(dataset, batch_size=config.batch_size,
+                            shuffle=False, num_workers=config.num_workers)
 
         else:
             raise NotImplementedError

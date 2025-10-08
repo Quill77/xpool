@@ -7,7 +7,7 @@ from config.base_config import Config
 from datasets.video_capture import VideoCapture
 
 
-class SuscapeLongDataset(Dataset):
+class SuscapeLabeledDataset(Dataset):
     """
         videos_dir: directory where all videos are stored 
         config: AllConfig object

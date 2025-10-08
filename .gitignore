@@ -4,5 +4,6 @@ checkpoints
 openai
 outputs
 logs
+sbatch
 
 __pycache__

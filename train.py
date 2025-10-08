@@ -76,6 +76,11 @@ def main():
                       writer=writer,
                       tokenizer=tokenizer)
 
+    if config.load_epoch is not None:
+        if config.load_epoch > 0:
+            trainer.load_checkpoint("checkpoint-epoch{}.pth".format(config.load_epoch))
+        else:
+            trainer.load_checkpoint("msvd_model_best.pth")
     trainer.train()
 
 
