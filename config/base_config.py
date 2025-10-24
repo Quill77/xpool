@@ -7,7 +7,8 @@ class Config(ABC):
         
         self.dataset_name = args.dataset_name
         self.videos_dir = args.videos_dir
-        self.msrvtt_train_file = args.msrvtt_train_file
+        self.train_file = args.train_file
+        self.test_file = args.test_file
         self.num_frames = args.num_frames
         self.video_sample_type = args.video_sample_type
         self.input_res = args.input_res

@@ -15,7 +15,8 @@ class AllConfig(Config):
         # data parameters
         parser.add_argument('--dataset_name', type=str, default='MSRVTT', help="Dataset name")
         parser.add_argument('--videos_dir', type=str, default='data/MSRVTT/vids', help="Location of videos")
-        parser.add_argument('--msrvtt_train_file', type=str, default='9k')
+        parser.add_argument('--train_file', type=str, required=True, help="Location of train file")
+        parser.add_argument('--test_file', type=str, required=True, help="Location of test file")
         parser.add_argument('--num_frames', type=int, default=12)
         parser.add_argument('--video_sample_type', default='uniform', help="'rand'/'uniform'")
         parser.add_argument('--input_res', type=int, default=224)
