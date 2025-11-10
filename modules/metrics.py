@@ -110,7 +110,6 @@ def generate_embeds_per_video_id(text_embeds, vid_embeds_pooled, video_ids, pool
 def t2v_metrics(sims):
     # Permute sims so it represents a sequence of text-video similarity matrices.
     # Then obtain the double argsort to position the rank on the diagonal
-    print("sims shape:", sims.shape)
     stacked_sims = sims.permute(1, 0, 2)
 
     sims_sort = torch.argsort(stacked_sims, dim=-1, descending=True)

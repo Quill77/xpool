@@ -1,0 +1,22 @@
+loss curve & accuracy curve
+change sbatch commands to a100
+output 的模型权重文件分开
+                                                            status      best        remark
+1. one label & muti labels                                  ok          one label   multi label contains bad positive videos, which doesnot match the text.
+2. circle loss margin=10, 15, 20, 25, 30                    ok          25          when training start, circle perfoemance better, when trainning continue, maybe lots of easy pos come over ReLU, bad pos leads trainning
+3. circle loss gamma=8, 16, 32, 64                          ok          32          使用gamma=64时数值溢出，训练无法进行，从8到32性能逐渐提升
+4. mix loss & clip loss                                     not start
+5. different embed_dims * num_frames * batch_size * lr      not start
+
+
+
+todo list:
+华为项目：以图搜图
+完成上面全部的测试
+英语课ppt
+英语课练习演讲
+下周周一到周三开会
+明天上午开会
+完成老师上课的视频检索ppt
+做数据分析的作业
+做组合优化的作业

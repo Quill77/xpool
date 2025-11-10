@@ -12,9 +12,7 @@ class CLIPTransformer(nn.Module):
         if self.config.huggingface:
             from transformers import CLIPModel
 
-            self.clip = CLIPModel.from_pretrained(
-                "/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32"
-            )
+            self.clip = CLIPModel.from_pretrained("/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32")
         else:
             from model.clip_model import load_clip
 
@@ -27,9 +25,7 @@ class CLIPTransformer(nn.Module):
         batch_size = data["video"].shape[0]
         text_data = data["text"]
         video_data = data["video"]
-        video_data = video_data.reshape(
-            -1, 3, self.config.input_res, self.config.input_res
-        )
+        video_data = video_data.reshape(-1, 3, self.config.input_res, self.config.input_res)
 
         if self.config.huggingface:
             text_features = self.clip.get_text_features(**text_data)

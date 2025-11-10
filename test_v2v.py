@@ -81,7 +81,7 @@ def main():
             trainer.load_checkpoint("checkpoint-epoch{}.pth".format(config.load_epoch))
         else:
             trainer.load_checkpoint("model_best.pth")
-    trainer.validate()
+    trainer.validate_v2v()
 
 
 if __name__ == "__main__":
