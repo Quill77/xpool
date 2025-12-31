@@ -2,6 +2,10 @@ sbatch
 data
 ckpt
 logs
+docs_figs
+log
+logs
+output
 
 __pycache__/
 

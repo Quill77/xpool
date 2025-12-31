@@ -10,7 +10,7 @@ class CLIPBaseline(nn.Module):
         
         if self.config.huggingface:
             from transformers import CLIPModel
-            self.clip = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+            self.clip = CLIPModel.from_pretrained("/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32")
         else:
             from model.clip_model import load_clip
             self.clip = load_clip(config.clip_arch)
@@ -18,7 +18,7 @@ class CLIPBaseline(nn.Module):
         self.pool_frames = BaselinePooling(config.pooling_type, config)
 
 
-    def forward(self, data, return_all_frames=False):
+    def forward(self, data):
         batch_size = data['video'].shape[0]
         text_data = data['text']
         video_data = data['video']
@@ -36,8 +36,5 @@ class CLIPBaseline(nn.Module):
         video_features = video_features.reshape(batch_size, self.config.num_frames, -1)
 
         video_features_pooled = self.pool_frames(text_features, video_features)
-            
-        if return_all_frames:
-            return text_features, video_features, video_features_pooled
 
-        return text_features, video_features_pooled
+        return text_features, video_features, video_features_pooled

@@ -9,7 +9,6 @@ from model.model_factory import ModelFactory
 from modules import metrics
 from modules.loss import LossFactory
 from trainer.trainer import Trainer
-from modules.optimization import AdamW, get_cosine_schedule_with_warmup
 
 
 def set_seed(seed):
@@ -35,29 +34,6 @@ def get_metrics(metric_name):
         raise NotImplementedError(f"Metric {metric_name} not defined.")
 
 
-def get_optimizer(model, config):
-    model_params = list(model.named_parameters())
-    clip_params = [p for n, p in model_params if "clip." in n]
-    noclip_params = [p for n, p in model_params if "clip." not in n]
-
-    optimizer_grouped_params = [
-        {"params": clip_params, "lr": config.clip_lr},
-        {"params": noclip_params, "lr": config.noclip_lr},
-    ]
-    return AdamW(optimizer_grouped_params, weight_decay=config.weight_decay)
-
-
-def get_scheduler(config, train_data_loader, optimizer):
-    num_training_steps = len(train_data_loader) * config.num_epochs
-    num_warmup_steps = int(config.warmup_proportion * num_training_steps)
-
-    return get_cosine_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=num_warmup_steps,
-        num_training_steps=num_training_steps,
-    )
-
-
 def get_tokenizer(use_huggingface):
     if not use_huggingface:
         from modules.tokenization_clip import SimpleTokenizer
@@ -79,27 +55,23 @@ def main():
     set_seed(config.seed)
 
     model = ModelFactory.get_model(config)
-    loss = LossFactory.get_loss(config)
+    # loss = LossFactory.get_loss(config)
     metrics = get_metrics(config.metric)
-    optimizer = get_optimizer(model, config)
 
-    train_data_loader = DataFactory.get_data_loader(config, split_type="train")
-    valid_data_loader = DataFactory.get_data_loader(config, split_type="test")
+    test_data_loader = DataFactory.get_data_loader(config, split_type="test")
 
-    scheduler = get_scheduler(config, train_data_loader, optimizer)
-
-    writer = None if config.no_tensorboard else SummaryWriter(log_dir=config.tb_log_dir)
+    writer = None if not config.no_tensorboard else SummaryWriter(log_dir=config.tb_log_dir)
     tokenizer = get_tokenizer(use_huggingface=config.huggingface)
 
     trainer = Trainer(
-        model=model,
-        loss=loss,
-        metrics=metrics,
-        optimizer=optimizer,
+        model,
+        None,
+        metrics,
+        None,
         config=config,
-        train_data_loader=train_data_loader,
-        valid_data_loader=valid_data_loader,
-        scheduler=scheduler,
+        train_data_loader=None,
+        valid_data_loader=test_data_loader,
+        scheduler=None,
         writer=writer,
         tokenizer=tokenizer,
     )
@@ -109,7 +81,7 @@ def main():
             trainer.load_checkpoint("checkpoint-epoch{}.pth".format(config.load_epoch))
         else:
             trainer.load_checkpoint("model_best.pth")
-    trainer.train()
+    trainer.v2v_retrieval()
 
 
 if __name__ == "__main__":
