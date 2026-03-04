@@ -44,7 +44,7 @@ def get_tokenizer(use_huggingface):
         from transformers import CLIPTokenizer
 
         return CLIPTokenizer.from_pretrained(
-            "/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32",
+            "/lab/haoq_lab/12532563/xpool/ckpt/clip-vit-base-patch32",
             TOKENIZERS_PARALLELISM=False,
         )
 

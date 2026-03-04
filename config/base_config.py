@@ -13,6 +13,7 @@ class Config(ABC):
         self.video_sample_type = args.video_sample_type
         self.input_res = args.input_res
 
+        self.task = args.task
         self.exp_name = args.exp_name
         self.model_path = args.model_path
         self.output_dir = args.output_dir

@@ -22,6 +22,7 @@ class AllConfig(Config):
         parser.add_argument("--input_res", type=int, default=224)
 
         # experiment parameters
+        parser.add_argument("--task", type=str, default="retrieval", help="Task of the current experiment")
         parser.add_argument("--exp_name", type=str, required=True, help="Name of the current experiment")
         parser.add_argument("--output_dir", type=str, default="./outputs")
         parser.add_argument("--save_every", type=int, default=5, help="Save model every n epochs")
