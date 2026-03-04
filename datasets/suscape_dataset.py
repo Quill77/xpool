@@ -1,8 +1,6 @@
 import json
 import os
 
-import torch
-from modules.basic_utils import load_json, read_lines
 from torch.utils.data import Dataset
 from config.base_config import Config
 from datasets.video_capture import VideoCapture
@@ -37,6 +35,7 @@ class SuscapeDataset(Dataset):
         video_info = self.video_list[index]
         video_id = video_info["video_id"]
         video_desc = video_info["desc"]
+        video_label = video_info["label"]
         video_path = os.path.join(self.videos_dir, video_id + ".mp4")
         imgs, idxs = VideoCapture.load_frames_from_video(video_path, self.config.num_frames, self.config.video_sample_type)
 
@@ -48,6 +47,7 @@ class SuscapeDataset(Dataset):
             "video_id": video_id,
             "video": imgs,
             "text": video_desc,
+            "label": video_label,
         }
 
         return ret

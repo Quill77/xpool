@@ -2,7 +2,7 @@ from random import shuffle
 from config.base_config import Config
 from datasets.image_transforms import get_train_img_tfms, get_test_img_tfms
 from datasets.suscape_dataset import SuscapeDataset
-from datasets.nuscene_corruption_dataset import NusceneCorruptionDataset
+from datasets.nuscenes_corruption_dataset import NuscenesCorruptionDataset
 from datasets.mixed_dataset import MixedDataset
 from torch.utils.data import DataLoader
 
@@ -19,7 +19,7 @@ class DataFactory:
         if config.dataset_name == "suscape":
             dataset = SuscapeDataset(config, split_type, img_tfms)
         elif config.dataset_name == "nuscenes_c":
-            dataset = NusceneCorruptionDataset(config, split_type, img_tfms)
+            dataset = NuscenesCorruptionDataset(config, split_type, img_tfms)
         elif config.dataset_name == "mixed":
             dataset = MixedDataset(config, split_type, img_tfms)
         else:

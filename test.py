@@ -9,6 +9,7 @@ from model.model_factory import ModelFactory
 from modules import metrics
 from modules.loss import LossFactory
 from trainer.trainer import Trainer
+from transformers import CLIPTokenizer
 
 
 def set_seed(seed):
@@ -33,20 +34,11 @@ def get_metrics(metric_name):
     else:
         raise NotImplementedError(f"Metric {metric_name} not defined.")
 
-
-def get_tokenizer(use_huggingface):
-    if not use_huggingface:
-        from modules.tokenization_clip import SimpleTokenizer
-
-        return SimpleTokenizer()
-
-    else:
-        from transformers import CLIPTokenizer
-
-        return CLIPTokenizer.from_pretrained(
-            "/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32",
-            TOKENIZERS_PARALLELISM=False,
-        )
+def get_tokenizer():
+    return CLIPTokenizer.from_pretrained(
+        "/lab/haoq_lab/12532563/xpool/ckpt/clip-vit-base-patch32",
+        TOKENIZERS_PARALLELISM=False,
+    )
 
 
 def main():
@@ -61,7 +53,7 @@ def main():
     test_data_loader = DataFactory.get_data_loader(config, split_type="test")
 
     writer = None if not config.no_tensorboard else SummaryWriter(log_dir=config.tb_log_dir)
-    tokenizer = get_tokenizer(use_huggingface=config.huggingface)
+    tokenizer = get_tokenizer()
 
     trainer = Trainer(
         model,

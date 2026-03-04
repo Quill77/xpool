@@ -8,7 +8,7 @@ from config.base_config import Config
 from datasets.video_capture import VideoCapture
 
 
-class NusceneCorruptionDataset(Dataset):
+class NuscenesCorruptionDataset(Dataset):
     """
     videos_dir: directory where all videos are stored
     config: AllConfig object

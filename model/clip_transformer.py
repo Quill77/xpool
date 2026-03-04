@@ -12,7 +12,7 @@ class CLIPTransformer(nn.Module):
         if self.config.huggingface:
             from transformers import CLIPModel
 
-            self.clip = CLIPModel.from_pretrained("/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32")
+            self.clip = CLIPModel.from_pretrained("/lab/haoq_lab/12532563/xpool/ckpt/clip-vit-base-patch32")
         else:
             from model.clip_model import load_clip
 

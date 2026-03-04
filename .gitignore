@@ -14,3 +14,7 @@ __pycache__/
 *.pth
 *.pt
 *.log
+*.out
+*.png
+*.jpg
+*.txt

@@ -8,8 +8,11 @@ from config.base_config import Config
 from collections import defaultdict, deque
 from trainer.base_trainer import BaseTrainer
 from modules.metrics import sim_matrix_training, compute_labeled_metrics
-from postprocess.generate_pics_reports import sims_to_report_and_cm
 
+def _save(y_true, y_pred, save_path="pred_labels.txt"):
+    with open(save_path, "w") as f:
+        for true_label, pred_label in zip(y_true, y_pred):
+            f.write(f"{true_label}, {pred_label}\n")
 
 class Trainer(BaseTrainer):
     """
@@ -39,7 +42,6 @@ class Trainer(BaseTrainer):
         self.tokenizer = tokenizer
 
         self.pooling_type = config.pooling_type
-        self.best_window = -1.0
         self.best = -1.0
 
     def _process_text(self, text):
@@ -132,19 +134,16 @@ class Trainer(BaseTrainer):
         if epoch % self.config.eval_every == 0:
             val_res = self._valid()
 
-            if val_res["R1-window"] > self.best_window:
-                self.best_window = val_res["R1-window"]
-                self._save_checkpoint(epoch, save_best=True)
-
             if val_res["R1"] > self.best:
                 self.best = val_res["R1"]
 
-            print(" Current Best Window Average R@1 is {}".format(self.best_window))
             print(" Current Best R@1 is {}\n".format(self.best))
 
         if epoch % self.config.save_every == 0:
             self._save_checkpoint(epoch, save_best=False)
 
+            if epoch % self.config.save_every == 0:
+                    self._save_checkpoint(epoch, save_best=False)
         res = {"loss_train": total_loss / num_steps}
         return res
 
@@ -191,10 +190,7 @@ class Trainer(BaseTrainer):
             data_label_arr = [sorted(label.split("-"))[-1] if label.startswith("1") or label.startswith("2") else label for label in data_label_arr]
             y_true = np.array(data_label_arr)
             y_pred = np.array([y_true[i] for i in sims.argmax(axis=1)])
-            with open(f"pred_labels.txt", "w") as f:
-                for true_label, pred_label in zip(y_true, y_pred):
-                    f.write(f"{true_label}, {pred_label}\n")
-            sims_to_report_and_cm(y_true, y_pred, save_prefix="validation_report")
+            _save(y_true, y_pred)
 
             # New evaluation metric
             new_metrics = compute_labeled_metrics(sims, data_label_arr)
@@ -226,9 +222,7 @@ class Trainer(BaseTrainer):
         """
         print(f"---------------Validation---------------\n")
         self.model.eval()
-        total_val_loss = 0.0
         video_embed_arr = []
-        # video_id_arr = []
         data_label_arr = []
 
         with torch.no_grad():
@@ -264,51 +258,53 @@ class Trainer(BaseTrainer):
                 video_embed_arr.append(video_embeds)
 
             video_embeds = torch.cat(video_embed_arr).cpu()
-            print(f"[Info] Total video embeds shape: {video_embeds.shape}", flush=True)
-            for i in range(video_embeds.shape[1], video_embeds.shape[1] + 1):
-                query_embeds = video_embeds[:, ::i, :]
-                print(f"[Info] Total query embeds shape: {query_embeds.shape}", flush=True)
-                query_embeds = query_embeds.mean(dim=1)
-                # Pool frames for inference once we have all texts and videos
-                self.model.pool_frames.cpu()
-                video_embeds_pooled = self.model.pool_frames(query_embeds, video_embeds)
-                self.model.pool_frames.to(self.device)
+            # for i in range(1, video_embeds.shape[1] + 1):
+            i = 8
+            query_embeds = video_embeds[:, :, :]
+            # query_embeds = video_embeds[:, torch.randperm(video_embeds.size(1))[:video_embeds.size(1)//i], :]
+            # query_embeds = query_embeds.mean(dim=1)
+            # print(f"[Info] Mean query embeds shape: {query_embeds.shape}", flush=True)
+            # Pool frames for inference once we have all texts and videos
+            self.model.pool_frames.cpu()
+            query_embeds_mean = query_embeds.mean(dim=1).cpu()
+            print(f"[Info] Query embeds mean shape: {query_embeds_mean.shape}, query_embeds shape: {query_embeds.shape}", flush=True)
+            query_embeds_pooled = self.model.pool_frames(query_embeds_mean, query_embeds)
+            query_embeds_pooled = query_embeds_pooled[torch.arange(query_embeds_pooled.shape[0]), torch.arange(query_embeds_pooled.shape[0]), :]
+            print(f"[Info] Pooled query embeds shape: {query_embeds_pooled.shape}, Video embeds shape: {video_embeds.shape}", flush=True)
+            video_embeds_pooled = self.model.pool_frames(query_embeds_pooled, video_embeds)
+            self.model.pool_frames.to(self.device)
 
-                # text_embeds_per_video_id, video_embeds_pooled_per_video_id = generate_embeds_per_video_id(text_embeds, video_embeds_pooled, video_id_arr, self.pooling_type)
+            # text_embeds_per_video_id, video_embeds_pooled_per_video_id = generate_embeds_per_video_id(text_embeds, video_embeds_pooled, video_id_arr, self.pooling_type)
 
-                sims = sim_matrix_training(query_embeds, video_embeds_pooled, self.pooling_type)
+            sims = sim_matrix_training(query_embeds_pooled, video_embeds_pooled, self.pooling_type)
 
-                sims.fill_diagonal_(-1)
-                sims = sims.unsqueeze(1)  # num_vids x 1 x num_vids
-                
-                res = self.metrics(sims)
+            sims.fill_diagonal_(-1)
+            sims = sims.unsqueeze(1)  # num_vids x 1 x num_vids
+            
+            res = self.metrics(sims)
 
-                # New evaluation metric
-                new_metrics = compute_labeled_metrics(sims, data_label_arr)
-                res.update(new_metrics)
+            # New evaluation metric
+            sims = sims.squeeze(1)
+            new_metrics = compute_labeled_metrics(sims, data_label_arr)
+            res.update(new_metrics)
 
-                total_val_loss = total_val_loss / len(self.valid_data_loader)
+            print(
+                f"R@1: {res['R1']:.4f}\n",
+                f"R@3: {res['R3']:.4f}\n",
+                f"R@5: {res['R5']:.4f}\n",
+                f"LR@1: {res['new_R1']:.4f}\n",
+                f"LR@3: {res['new_R3']:.4f}\n",
+                f"LR@5: {res['new_R5']:.4f}\n",
+                f"LP@1: {res['new_P1']:.4f}\n",
+                f"LP@3: {res['new_P3']:.4f}\n",
+                f"LP@5: {res['new_P5']:.4f}\n",
+            )
 
-                print(
-                    f"R@1: {res['R1']:.4f}\n",
-                    f"R@3: {res['R3']:.4f}\n",
-                    f"R@5: {res['R5']:.4f}\n",
-                    f"LR@1: {res['new_R1']:.4f}\n",
-                    f"LR@3: {res['new_R3']:.4f}\n",
-                    f"LR@5: {res['new_R5']:.4f}\n",
-                    f"LP@1: {res['new_P1']:.4f}\n",
-                    f"LP@3: {res['new_P3']:.4f}\n",
-                    f"LP@5: {res['new_P5']:.4f}\n",
-                )
+            if self.writer is not None:
+                for m in res:
+                    self.writer.add_scalar(f"val/{m}", res[m], self.global_step)
 
-
-                res["loss_val"] = total_val_loss
-
-                if self.writer is not None:
-                    for m in res:
-                        self.writer.add_scalar(f"val/{m}", res[m], self.global_step)
-
-                self.model.train()
+            self.model.train()
             return res
 
     def _get_cache_path(self):

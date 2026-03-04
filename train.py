@@ -10,6 +10,7 @@ from modules import metrics
 from modules.loss import LossFactory
 from trainer.trainer import Trainer
 from modules.optimization import AdamW, get_cosine_schedule_with_warmup
+from transformers import CLIPTokenizer
 
 
 def set_seed(seed):
@@ -58,19 +59,11 @@ def get_scheduler(config, train_data_loader, optimizer):
     )
 
 
-def get_tokenizer(use_huggingface):
-    if not use_huggingface:
-        from modules.tokenization_clip import SimpleTokenizer
-
-        return SimpleTokenizer()
-
-    else:
-        from transformers import CLIPTokenizer
-
-        return CLIPTokenizer.from_pretrained(
-            "/lab/haoq_lab/12532563/xpool/checkpoints/clip-vit-base-patch32",
-            TOKENIZERS_PARALLELISM=False,
-        )
+def get_tokenizer():
+    return CLIPTokenizer.from_pretrained(
+        "/lab/haoq_lab/12532563/xpool/ckpt/clip-vit-base-patch32",
+        TOKENIZERS_PARALLELISM=False,
+    )
 
 
 def main():
@@ -89,7 +82,7 @@ def main():
     scheduler = get_scheduler(config, train_data_loader, optimizer)
 
     writer = None if config.no_tensorboard else SummaryWriter(log_dir=config.tb_log_dir)
-    tokenizer = get_tokenizer(use_huggingface=config.huggingface)
+    tokenizer = get_tokenizer()
 
     trainer = Trainer(
         model=model,
@@ -108,7 +101,7 @@ def main():
         if config.load_epoch > 0:
             trainer.load_checkpoint("checkpoint-epoch{}.pth".format(config.load_epoch))
         else:
-            trainer.load_checkpoint("model_best.pth")
+            trainer.load_checkpoint("msrvtt_9k_model_best.pth")
     trainer.train()
 
 

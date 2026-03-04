@@ -24,41 +24,41 @@ class MixedDataset(Dataset):
 
         test_file = config.test_file
         train_file = config.train_file
-        hdd_file = "/lab/haoq_lab/12532563/xpool/data/hdd_data/results_clips.json"
+        # hdd_file = "/lab/haoq_lab/12532563/xpool/data/hdd_data/results_clips.json"
 
         if split_type == "train":
             with open(train_file, "r") as train_file_data:
                 self.video_list = json.load(train_file_data)
-            with open(hdd_file, "r") as hdd_file_data:
-                hdd_data = json.load(hdd_file_data)
+            # with open(hdd_file, "r") as hdd_file_data:
+            #     hdd_data = json.load(hdd_file_data)
 
-            for data in hdd_data:
-                desc = data["description"]
-                if "FinalCaption" not in desc.keys():
-                    continue
-                desc = desc["FinalCaption"]
-                new_data = {
-                    "video_id": data["mp4_path"],
-                    "desc": desc,
-                    "label": data["label_name"],
-                    "dataset": "HDD",
-                }
-                self.video_list.append(new_data)
+            # for data in hdd_data:
+            #     desc = data["description"]
+            #     if "FinalCaption" not in desc.keys():
+            #         continue
+            #     desc = desc["FinalCaption"]
+            #     new_data = {
+            #         "video_id": data["mp4_path"],
+            #         "desc": desc,
+            #         "label": data["label_name"],
+            #         "dataset": "HDD",
+            #     }
+            #     self.video_list.append(new_data)
         else:
             with open(test_file, "r") as test_file_data:
                 self.video_list = json.load(test_file_data)
 
-        self.video_list = [video for video in self.video_list if video["dataset"] == "suscape" and not video["label"][0].startswith("4")]
+        # self.video_list = [video for video in self.video_list if video["dataset"] == "suscape" and not video["label"][0].startswith("4")]
 
-        remove_file = "data/mixed/delete_id.json"
-        with open(remove_file, "r") as remove_file_data:
-            remove_data_list = json.load(remove_file_data)
+        # remove_file = "data/mixed/delete_id.json"
+        # with open(remove_file, "r") as remove_file_data:
+        #     remove_data_list = json.load(remove_file_data)
 
-        remove_set = set(data["video_id"] for data in remove_data_list)
+        # remove_set = set(data["video_id"] for data in remove_data_list)
         # filter = lambda data: data["video_id"] in remove_set or not data["video_id"].startswith("v")
-        filter = lambda data: data["video_id"] not in remove_set
+        # filter = lambda data: data["video_id"] not in remove_set
 
-        self.video_list = [data for data in self.video_list if filter(data)]
+        # self.video_list = [data for data in self.video_list if filter(data)]
         print(f"Loaded {len(self.video_list)} videos for {split_type} split.")
 
     def __getitem__(self, index):
